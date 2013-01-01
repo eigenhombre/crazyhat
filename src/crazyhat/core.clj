@@ -1,5 +1,6 @@
 (ns crazyhat.core
   (:gen-class)
+  (:import java.io.File)
   (:require [watchtower.core :as w]
             [ring.adapter.jetty :as j]
             [ring.util.response :as resp]
@@ -7,20 +8,17 @@
             [markdown.core :as md]
             [clojure.java.io :as io]))
 
-(def source-files "../markup")
-(def site-dest    "/Users/jacobsen/websites/johnj12/site")
 
-
-(defn newpath [p]
+(defn new-file-name [p srcdir destdir]
   (-> p
-      (st/replace-first source-files site-dest)
+      (st/replace-first srcdir destdir)
       (st/replace-first #"\.[^\.]+?$" ".html")))
 
 
-(defn handle-update [files]
+(defn handle-update [files srcdir destdir]
   (doseq [f files]
     (let [path (.getPath f)
-          new-path (newpath path)]
+          new-path (new-file-name path srcdir destdir)]
       ;; Make parents if needed
       (if (io/make-parents new-path)
         (println "Made parent dir(s) for" new-path))
@@ -31,23 +29,32 @@
         (spit new-path html)))))
 
 
-(defn watcher []
-  (w/watcher [source-files]
-             (w/rate 100)
-             (w/file-filter w/ignore-dotfiles)
-             (w/file-filter (w/extensions :md))
-             (w/on-change handle-update)))
+(defn watcher [root]
+  (let [src (str root "/markup")
+        dest (str root "/site")]
+    (w/watcher [src]
+               (w/rate 100)
+               (w/file-filter w/ignore-dotfiles)
+               (w/file-filter (w/extensions :md))
+               (w/on-change (fn [fs] (handle-update fs src dest))))))
 
 
-(defn server []
+(defn server [root]
   (letfn [(serve-stat [req]
-            (println "Serving" (:uri req))
-            (let [r (resp/file-response (:uri req) {:root site-dest})]
+            (print "Serving" (:uri req) ": ")
+            (let [r (resp/file-response (:uri req) {:root (str root "/site")})]
               (println r)
               r))]
     (future (j/run-jetty serve-stat {:port 8080 :join? false}))))
 
 
-(defn -main []
-  (watcher)
-  (server))
+(defn -main [ & args ]
+  (case (count args)
+    0 (println "Please supply a directory for your site toplevel")
+    1 (let [[path] args]
+        (if (.exists (File. path))
+          (do
+            (watcher path)
+            (server path))
+          (println (format "Directory %s doesn't exist!" path))))
+    (println "Please supply only one directory name")))
