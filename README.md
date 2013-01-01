@@ -2,8 +2,7 @@
 
 Another Simple Static Blog Engine ... written in Clojure
 
-## Usage
-
+![crazyhat](crazyhat.png)
 `crazyhat` **[work in progress]** is a simple static blog generation engine similar to [Jekyll](https://github.com/mojombo/jekyll), but which affords more ease in working with a heirarchy of pages/directories, with each directory reflected as a page in the generated site, and with the possibility to navigate to related areas more easily.  Any page can be a blog, and there is an aggregate feed for all blog posts as well.
 
 ### Building
