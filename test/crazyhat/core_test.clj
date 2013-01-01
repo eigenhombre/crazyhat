@@ -1,15 +1,51 @@
 (ns crazyhat.core-test
+  (:import java.io.File)
   (:use clojure.test
         midje.sweet
-        crazyhat.core))
+        crazyhat.core
+        crazyhat.util)
+  (:require [clojure.java.io :as io]))
 
-(fact "Extension on empty path"             (extension "") => nil)
-(fact "Extension on simple path"            (extension "x") => nil)
-(fact "Extension on simple path 2"          (extension "x.y") => "y")
-(fact "Extension with dirs"                 (extension "z/x.y") => "y")
-(fact "Extension with dotted dirs"          (extension "z.b/x.y") => "y")
-(fact "Extension with dotted dirs (tricky)" (extension "z.b/x") => nil)
 
-(fact (dirname "x/y/z") => "x/y")
-(fact (dirname "x/y") => "x")
-(fact (dirname "x") => "")
+(facts "about extension"
+       (extension "")        => nil
+       (extension "x")       => nil
+       (extension "x.y")     => "y"
+       (extension "z/x.y")   => "y"
+       (extension "z.b/x.y") => "y"
+       (extension "z.b/x")   => nil)
+
+(facts "about dirname"
+       (dirname "x/y/z")   => "x/y"
+       (dirname "x/y")     => "x"
+       (dirname "x")       => ""
+       (dirname
+        (dirname "x/y/z")) => "x")
+
+(facts "about basename"
+       (basename "x.y")      => "x"
+       (basename "x")        => "x"
+       (basename "/x/y/z.f") => "z"
+       (basename "/x/y/z")   => "z")
+
+(facts "about appendpath"
+       (appendpath "a" "b")  => "a/b"
+       (appendpath "a/" "b") => "a/b"
+       (appendpath "a" "/b") => "a/b")
+
+
+(let [markup "/tmp/testdir/markup"
+      site "/tmp/testdir/site"
+      index_md (str markup "/index.md")
+      fakejpg (str markup "/somedir/fake.jpg")
+      newjpg (str site "/somedir/fake.jpg")
+      index_html (str site "/index.html")]
+  (io/make-parents index_md)
+  (io/make-parents fakejpg)
+  (spit index_md "# Some stuff")
+  (spit fakejpg "xxxx")
+  (handle-update [(File. index_md)
+                  (File. fakejpg)] markup site)
+  (fact (File. index_html) => #(.exists %))
+  (fact (File. newjpg) => #(.exists %)))
+

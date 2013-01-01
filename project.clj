@@ -1,6 +1,6 @@
 (defproject crazyhat "0.1.0-SNAPSHOT"
   :description "Static Web site generator and test server"
-  :url "http://example.com/FIXME"
+  :url "https://github.com/eigenhombre/crazyhat"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :repositories {"stuart" "http://stuartsierra.com/maven2"}
