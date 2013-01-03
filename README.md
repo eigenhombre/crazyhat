@@ -47,9 +47,41 @@ specified as extra terms in the URL.
 [1] In a future version the copy operation may be changed to a hard
 link (supported in Java 7).
 
-### Deployment:
+### Deployment
 
     rsync -vurt <dest-dir>/site user@remotehost:path/to/deploy/dir
+
+## FAQ
+
+**Q**: Why not write a Rails/Django/Ring/... app?
+
+A: Because:
+
+- I don't have any dynamic content except for what JavaScript can
+easily provide.  Basically I just need to serve text and pictures.
+- Static content is very fast to serve.
+- Deployment is trivial - just rsync and use Mongoose/NGINX, rather
+than having to set up databases, mod-blah in Apache, etc., etc. -- a
+lot of incidental complexity for little gain.
+- I write Python/Django all day in my current day job.  Time for something
+else for personal stuff.
+
+**Q**: Why not just use Jekyll?
+
+A: I like Jekyll, but I prefer to have multiple blogs in one site,
+which Jekyll doesn't really support easily.  I want:
+
+1. to have the navigation bar for each page updated automagically based on
+neighbors and children in directory structure;
+1. to allow any page to be its own blog;
+1. extensive, automated image processing [more on this to come];
+1. to customize Clojure code (simple & beautiful) rather than Ruby
+(somewhat pretty but not simple);
+1. to minimize the amount of HTML and CSS I have to write; I'd rather
+write in [better](https://github.com/weavejester/hiccup) [DSLs](https://github.com/paraseba/cssgen).
+
+The features of `crazyhat` are taken from my Django application
+[Coriolis](http://www.npxdesigns.com/projects/coriolis/).
 
 ## License
 

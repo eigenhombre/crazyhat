@@ -33,7 +33,17 @@
        (appendpath "a/" "b") => "a/b"
        (appendpath "a" "/b") => "a/b")
 
+(defn fake-watcher [root]
+  "Simulate behavior of core/watcher for testing"
+  (let [s (file-seq (File. root))
+        filenames (map #(.getPath %) s)]
+    (for [ext (map name extensions-to-update)
+          f filenames
+          :when (= ext (extension f))]
+      (File. f))))
 
+;; Test harness where we actually create files and check corresponding
+;; results:
 (let [markup "/tmp/testdir/markup"
       site "/tmp/testdir/site"
       index_md (str markup "/index.md")
@@ -44,8 +54,7 @@
   (io/make-parents fakejpg)
   (spit index_md "# Some stuff")
   (spit fakejpg "xxxx")
-  (handle-update [(File. index_md)
-                  (File. fakejpg)] markup site)
+  (handle-update (fake-watcher markup) markup site)
   (fact (File. index_html) => #(.exists %))
   (fact (File. newjpg) => #(.exists %)))
 

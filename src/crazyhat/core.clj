@@ -30,13 +30,15 @@
         (println "Don't know what to do with" path "!!!")))))
         
 
+(def extensions-to-update [:md :jpg])
+
 (defn watcher [root]
   (let [src (appendpath root "markup")
         dest (appendpath root "site")]
     (w/watcher [src]
                (w/rate 100)
                (w/file-filter w/ignore-dotfiles)
-               (w/file-filter (w/extensions :md :jpg))
+               (w/file-filter (apply w/extensions extensions-to-update))
                (w/on-change (fn [fs] (handle-update fs src dest))))))
 
 
