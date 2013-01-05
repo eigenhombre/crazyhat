@@ -93,9 +93,11 @@ new crazy hat!"  And so it was....
 
 ## <a id="tutorial"></a>Tutorial
 
-We'll assume for the purposes of this tutorial that you're in the root directory of the source tree and built the Jar file in `./target`.
+We'll assume for the purposes of this tutorial that you're in the root
+directory of the source tree and have built the Jar file in `./target`
+(see building instructions at top).
 
-Make a toplevel for your blog:
+Make a toplevel directory for your blog:
 
     mkdir myblog
 
