@@ -49,12 +49,17 @@
       index_md (str markup "/index.md")
       fakejpg (str markup "/somedir/fake.jpg")
       newjpg (str site "/somedir/fake.jpg")
+      fakepng (str markup "/somedir/fake.png")
+      newpng (str site "/somedir/fake.png")
       index_html (str site "/index.html")]
   (io/make-parents index_md)
   (io/make-parents fakejpg)
+  (io/make-parents fakepng)
   (spit index_md "# Some stuff")
   (spit fakejpg "xxxx")
+  (spit fakepng "xxxx")
   (handle-update (fake-watcher markup) markup site)
   (fact (File. index_html) => #(.exists %))
-  (fact (File. newjpg) => #(.exists %)))
+  (fact (File. newjpg) => #(.exists %))
+  (fact (File. newpng) => #(.exists %)))
 

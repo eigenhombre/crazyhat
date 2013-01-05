@@ -24,13 +24,13 @@
                ;; Actually make the required HTML file
                (let [html (md/md-to-html-string (slurp f))]
                  (spit new-path html)))
-        "jpg" (let [new-path (str (appendpath newdir bn) ".jpg")]
-                (println path "==JPG==>" new-path)
-                (copy-file path new-path))
+        ("jpg" "png") (let [new-path (str (appendpath newdir bn) "." ext)]
+                        (println path "==image==>" new-path)
+                        (copy-file path new-path))
         (println "Don't know what to do with" path "!!!")))))
         
 
-(def extensions-to-update [:md :jpg])
+(def extensions-to-update [:md :jpg :png])
 
 (defn watcher [root]
   (let [src (appendpath root "markup")

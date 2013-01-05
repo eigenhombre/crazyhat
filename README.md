@@ -51,6 +51,53 @@ link (supported in Java 7).
 
     rsync -vurt <dest-dir>/site user@remotehost:path/to/deploy/dir
 
+## Tutorial
+
+We'll assume for the purposes of this tutorial that you're in the root directory of the source tree and built the Jar file in `./target`.
+
+Make a toplevel for your blog:
+
+    mkdir myblog
+
+Start the application and point it to the new directory:
+
+    java -jar target/crazyhat-app.jar myblog
+
+Fire up your browser and point it to localhost:8080.  You should get a 404-not-found page.
+
+### Creating your first content
+
+In a new terminal window, cd to myblog and make the markup directory.
+
+    cd /path/to/crazyhat/myblog
+    mkdir markup
+    cd markup
+
+Create an empty index.md file:
+
+    touch index.md
+
+You should see output in your Crazyhat app showing that it discovered and processed the new file.  Hit reload in your browser: the error message should be gone now.
+
+Edit `index.md` and add some content, e.g.:
+
+    # Welcome!
+
+    Welcome to my new blog.  Crazy hats for everyone!
+
+Hit reload again on your browser and you should see the brand-new HTML rendered there.
+
+### Adding an image
+
+Adding images is easy.  You can steal mine for the purposes of the test.  In your toplevel `markup` dir,
+
+    wget https://raw.github.com/eigenhombre/crazyhat/master/crazyhat.png --no-check-certificate
+
+Add the following to `index.md`:
+
+    ![image](crazyhat.png)
+
+
 ## FAQ
 
 **Q**: Why not write a Rails/Django/Ring/... app?
@@ -80,8 +127,14 @@ neighbors and children in directory structure;
 1. to minimize the amount of HTML and CSS I have to write; I'd rather
 write in [better](https://github.com/weavejester/hiccup) [DSLs](https://github.com/paraseba/cssgen).
 
-The features of `crazyhat` are taken from my Django application
+Many features of `crazyhat` are taken from my Django application
 [Coriolis](http://www.npxdesigns.com/projects/coriolis/).
+
+**Q**: What's with the name?
+
+A: When I was typing `lein new`, I paused for a moment to think of a
+new name.  Someone walked into the room and said, "You're wearing your
+new crazy hat!"  And so it was....
 
 ## License
 
