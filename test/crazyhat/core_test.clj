@@ -28,13 +28,14 @@
        (basename "/x/y/z.f") => "z"
        (basename "/x/y/z")   => "z")
 
-(facts "about appendpath"
-       (appendpath "a" "b")  => "a/b"
-       (appendpath "a/" "b") => "a/b"
-       (appendpath "a" "/b") => "a/b")
+(facts "about pathjoin"
+       (pathjoin "a" "b")  => "a/b"
+       (pathjoin "a/" "b") => "a/b"
+       (pathjoin "a" "/b") => "a/b")
 
-(defn fake-watcher [root]
+(defn fake-watcher
   "Simulate behavior of core/watcher for testing"
+  [root]
   (let [s (file-seq (File. root))
         filenames (map #(.getPath %) s)]
     (for [ext (map name extensions-to-update)
@@ -42,24 +43,32 @@
           :when (= ext (extension f))]
       (File. f))))
 
+(defn delete-file-recursively
+  "Delete file f. If it's a directory, recursively delete all its
+contents. Raise an exception if any deletion fails unless silently is
+true. [stolen/modified from clojure-contrib]"
+  [f]
+  (if (.isDirectory f)
+    (doseq [child (.listFiles f)]
+      (delete-file-recursively child)))
+  (.delete f))
+
 ;; Test harness where we actually create files and check corresponding
 ;; results:
-(let [markup "/tmp/testdir/markup"
-      site "/tmp/testdir/site"
-      index_md (str markup "/index.md")
-      fakejpg (str markup "/somedir/fake.jpg")
-      newjpg (str site "/somedir/fake.jpg")
-      fakepng (str markup "/somedir/fake.png")
-      newpng (str site "/somedir/fake.png")
-      index_html (str site "/index.html")]
-  (io/make-parents index_md)
-  (io/make-parents fakejpg)
-  (io/make-parents fakepng)
-  (spit index_md "# Some stuff")
-  (spit fakejpg "xxxx")
-  (spit fakepng "xxxx")
-  (handle-update (fake-watcher markup) markup site)
-  (fact (File. index_html) => #(.exists %))
-  (fact (File. newjpg) => #(.exists %))
-  (fact (File. newpng) => #(.exists %)))
+(def root "/tmp/testdir")
+(def markup (pathjoin root "markup"))
+(def site (pathjoin root "site"))
 
+(do
+  (delete-file-recursively (File. root))
+  (doseq [fname ["somedir/to/this/file/fake.jpg"
+                 ["index.md" "index.html" "# Header\n\nbody"]
+                 "fake.png"
+                 "site.css"
+                 "media/css/ancillary.css"]]
+    (let [src (pathjoin markup (if (vector? fname) (first fname)  fname))
+          dst (pathjoin   site (if (vector? fname) (second fname) fname))]
+      (io/make-parents src)
+      (spit src (if (vector? fname) (nth fname 2) "fake stuff"))
+      (handle-update (fake-watcher markup) markup site)
+      (fact (File. dst) => #(.exists %)))))

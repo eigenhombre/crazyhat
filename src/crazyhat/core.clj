@@ -11,42 +11,47 @@
   (:use crazyhat.util))
 
 
-(defn handle-update [files srcdir destdir]
+;; FIXME: decompose/decomplect this more functionally, into the following stages:
+;; - determine destination paths
+;; - process files individually based on extension
+(defn handle-update [files srcdir destdir & more]
   (doseq [f files]
-    (let [path (.getPath f)
+    (let [verbose (:verbose (apply hash-map more))
+          path (.getPath f)
           ext (extension path)
           newdir (dirname (st/replace path srcdir destdir))
-          bn (basename path)]
+          bn (basename path)
+          get-new-path (fn [ext] (str (pathjoin newdir bn) "." ext))]
       (case ext
-        "md" (let [new-path (str (appendpath newdir bn) ".html")]
+        "md" (let [new-path (get-new-path "html")]
                (io/make-parents new-path)
-               (println path "==HTML==>" new-path)
+               (if verbose (println path "==HTML==>" new-path))
                ;; Actually make the required HTML file
                (let [html (md/md-to-html-string (slurp f))]
                  (spit new-path html)))
-        ("jpg" "png") (let [new-path (str (appendpath newdir bn) "." ext)]
-                        (println path "==image==>" new-path)
-                        (copy-file path new-path))
+        ("jpg" "png" "css") (let [new-path (str (pathjoin newdir bn) "." ext)]
+                              (if verbose (println path "==copy==>" new-path))
+                              (copy-file path new-path))
         (println "Don't know what to do with" path "!!!")))))
         
 
-(def extensions-to-update [:md :jpg :png])
+(def extensions-to-update [:md :jpg :png :css])
 
 (defn watcher [root]
-  (let [src (appendpath root "markup")
-        dest (appendpath root "site")]
+  (let [src (pathjoin root "markup")
+        dest (pathjoin root "site")]
     (w/watcher [src]
                (w/rate 100)
                (w/file-filter w/ignore-dotfiles)
                (w/file-filter (apply w/extensions extensions-to-update))
-               (w/on-change (fn [fs] (handle-update fs src dest))))))
+               (w/on-change (fn [fs] (handle-update fs src dest :verbose true))))))
 
 
 (defn server [root]
   (letfn [(serve-stat [req]
             (print "Serving" (:uri req) ": ")
             (let [r (resp/file-response (:uri req)
-                                        {:root (appendpath root "site")})]
+                                        {:root (pathjoin root "site")})]
               (println r)
               r))]
     (future (j/run-jetty serve-stat {:port 8080 :join? false}))))

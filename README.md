@@ -51,7 +51,47 @@ link (supported in Java 7).
 
     rsync -vurt <dest-dir>/site user@remotehost:path/to/deploy/dir
 
-## Tutorial
+For more details on how to use the application, see the [tutorial](#tutorial), below.
+
+## FAQ
+
+**Q**: Why not write a Rails/Django/Ring/... app?
+
+A: Because:
+
+- I don't have any dynamic content except for what JavaScript can
+easily provide.  Basically I just need to serve text and pictures.
+- Static content is very fast to serve.
+- Deployment is trivial - just rsync and use Mongoose/NGINX, rather
+than having to set up databases, mod-blah in Apache, etc., etc. -- a
+lot of incidental complexity for little gain.
+- I write Python/Django all day in my current day job.  Time for something
+else for personal stuff.
+
+**Q**: Why not just use Jekyll?
+
+A: I like Jekyll, but I prefer to have multiple blogs in one site,
+which Jekyll doesn't really support easily.  I want:
+
+1. to have the navigation bar for each page updated automagically based on
+neighbors and children in directory structure;
+1. to allow any page to be its own blog;
+1. extensive, automated image processing [more on this to come];
+1. to customize Clojure code (simple & beautiful) rather than Ruby
+(somewhat pretty but not simple);
+1. to minimize the amount of HTML and CSS I have to write; I'd rather
+write in [better](https://github.com/weavejester/hiccup) [DSLs](https://github.com/paraseba/cssgen).
+
+Many features of `crazyhat` are taken from my Django application
+[Coriolis](http://www.npxdesigns.com/projects/coriolis/).
+
+**Q**: What's with the name?
+
+A: When I was typing `lein new`, I paused for a moment to think of a
+new name.  Someone walked into the room and said, "You're wearing your
+new crazy hat!"  And so it was....
+
+## <a id="tutorial"></a>Tutorial
 
 We'll assume for the purposes of this tutorial that you're in the root directory of the source tree and built the Jar file in `./target`.
 
@@ -97,44 +137,25 @@ Add the following to `index.md`:
 
     ![image](crazyhat.png)
 
+Reload your browser and you should see the picture on your new page.
 
-## FAQ
+### Styling your new site
 
-**Q**: Why not write a Rails/Django/Ring/... app?
+To reduce the fuglyness of your site, you can add a css file.  Put the following in `markup/site.css`:
 
-A: Because:
+    body {
+      font-size: 14px;
+      font-family: verdana, arial, sans-serif;
+      color: #222;
+      background-color: #f7f7f7;
+    }
 
-- I don't have any dynamic content except for what JavaScript can
-easily provide.  Basically I just need to serve text and pictures.
-- Static content is very fast to serve.
-- Deployment is trivial - just rsync and use Mongoose/NGINX, rather
-than having to set up databases, mod-blah in Apache, etc., etc. -- a
-lot of incidental complexity for little gain.
-- I write Python/Django all day in my current day job.  Time for something
-else for personal stuff.
+    h1 {
+      font-size: 20px;
+    }
 
-**Q**: Why not just use Jekyll?
+*... in progress / to be continued...*
 
-A: I like Jekyll, but I prefer to have multiple blogs in one site,
-which Jekyll doesn't really support easily.  I want:
-
-1. to have the navigation bar for each page updated automagically based on
-neighbors and children in directory structure;
-1. to allow any page to be its own blog;
-1. extensive, automated image processing [more on this to come];
-1. to customize Clojure code (simple & beautiful) rather than Ruby
-(somewhat pretty but not simple);
-1. to minimize the amount of HTML and CSS I have to write; I'd rather
-write in [better](https://github.com/weavejester/hiccup) [DSLs](https://github.com/paraseba/cssgen).
-
-Many features of `crazyhat` are taken from my Django application
-[Coriolis](http://www.npxdesigns.com/projects/coriolis/).
-
-**Q**: What's with the name?
-
-A: When I was typing `lein new`, I paused for a moment to think of a
-new name.  Someone walked into the room and said, "You're wearing your
-new crazy hat!"  And so it was....
 
 ## License
 

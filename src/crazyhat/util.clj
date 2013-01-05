@@ -4,7 +4,7 @@
             [clojure.java.io :as io]))
 
 
-(defn appendpath [a b]
+(defn pathjoin [a b]
   (str (st/replace a #"/$" "")
        "/"
        (st/replace b #"^/" "")))
