@@ -38,7 +38,7 @@ etc.; Markdown files in any of these are processed into HTML files in
 `<dest-dir>/site`, preserving the directory heirarchy in `markup.`
 Other files are copied to the `site` dir when they appear.[1]
 
-### Testing
+### Testing Your Site
 
 While the application is running, files can be browsed at
 [http://localhost:8080/](http://localhost:8080/), with subdirectories
