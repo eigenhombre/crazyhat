@@ -156,8 +156,11 @@ To reduce the fuglyness of your site, you can add a css file.  Put the following
       font-size: 20px;
     }
 
-*... in progress / to be continued...*
+For the moment, the HTML produced by `crazyhat` links to `/site.css`
+in every HTML page.  When you reload your browser, you should see the
+new styling take effect.
 
+#### *Next feature to add: blog posts*
 
 ## License
 

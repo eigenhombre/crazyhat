@@ -10,6 +10,7 @@
                  [markdown-clj "0.9.13"]
                  [com.stuartsierra/lazytest "1.2.3"]
                  [midje "1.4.0"]
+                 [hiccup "1.0.2"]
                  [watchtower "0.1.1"]]
   :main crazyhat.core
   :jar-name "crazyhat.jar"

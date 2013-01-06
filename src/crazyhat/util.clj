@@ -4,10 +4,11 @@
             [clojure.java.io :as io]))
 
 
-(defn pathjoin [a b]
-  (str (st/replace a #"/$" "")
-       "/"
-       (st/replace b #"^/" "")))
+(defn pathjoin [& args]
+  (st/join "/"
+           (map (comp #(st/replace % #"/$" "")
+                      #(st/replace % #"^/" ""))
+                args)))
 
 
 (defn dirname [path]
@@ -16,11 +17,12 @@
     ""))
 
 
-(defn basename [path]
-  (let [path (last (.split path "\\/"))]
-    (if (.contains path ".")
-      (st/join "." (drop-last (.split path "\\.")))
-      path)))
+(defn splitext [path]
+  (let [parts (.split path "\\.")]
+    (if (= 1 (count parts))
+      [path ""]
+      [(st/join "." (drop-last parts))
+       (last parts)])))
 
 
 (defn copy-file [from to]

@@ -8,7 +8,10 @@
             [markdown.core :as md]
             [clojure.java.io :as io]
             crazyhat.util)
-  (:use crazyhat.util))
+  (:use crazyhat.util
+        [hiccup.core :only [html]]
+        [hiccup.page :only [html5 include-css]]))
+
 
 (defn new-extension
   [x]
@@ -16,22 +19,34 @@
     "md" "html"
     x))
 
+
 (defn new-filenames-and-extensions
-  [files srcdir destdir]
+  [files rootdir]
   (map (fn [F]
          (let [path (.getPath F)
+               path-in-markup-dir (st/replace path (pathjoin rootdir "markup/") "")
                ext (extension path)
-               newdir (dirname (st/replace path srcdir destdir))
-               basedir (basename path)
                newext (new-extension ext)
-               newfile (str (pathjoin newdir basedir) "." newext)]
+               newfile-oldext (pathjoin rootdir "site" path-in-markup-dir)
+               [newf _] (splitext newfile-oldext)
+               newfile (str newf "." newext)]
            [path newfile newext]))
        files))
+
 
 (defn handle-copy!
   [oldfile newfile verbose]
   (if verbose (println oldfile "==copy==>" newfile))
   (copy-file oldfile newfile))
+
+
+(defn wrap-html
+  [txt]
+  (html
+   (html5
+    [:head (include-css "/site.css")]
+    [:body txt])))
+
 
 (defn handle-html!
   [oldfile newfile verbose]
@@ -39,12 +54,14 @@
   (->> oldfile
        (slurp)
        (md/md-to-html-string)
+       (wrap-html)
        (spit newfile)))
 
+
 (defn handle-update
-  [files srcdir destdir & more]
+  [files srcdir destdir rootdir & more]
   (let [verbose (:verbose (apply hash-map more))
-        newfiles (new-filenames-and-extensions files srcdir destdir)]
+        newfiles (new-filenames-and-extensions files rootdir)]
     (doseq [[oldfile newfile ext] newfiles]
       (io/make-parents newfile)
       (case ext
@@ -52,7 +69,9 @@
         ("jpg" "png" "css") (handle-copy! oldfile newfile verbose)
         (println "Don't know what to do with" oldfile "!!!")))))        
 
+
 (def extensions-to-update [:md :jpg :png :css])
+
 
 (defn watcher
   [root]
@@ -62,7 +81,7 @@
                (w/rate 100)
                (w/file-filter w/ignore-dotfiles)
                (w/file-filter (apply w/extensions extensions-to-update))
-               (w/on-change (fn [fs] (handle-update fs src dest :verbose true))))))
+               (w/on-change (fn [fs] (handle-update fs src dest root :verbose true))))))
 
 
 (defn server

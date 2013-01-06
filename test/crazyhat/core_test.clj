@@ -22,16 +22,21 @@
        (dirname
         (dirname "x/y/z")) => "x")
 
-(facts "about basename"
-       (basename "x.y")      => "x"
-       (basename "x")        => "x"
-       (basename "/x/y/z.f") => "z"
-       (basename "/x/y/z")   => "z")
+
+(facts "about splitext"
+       (splitext "x.y")      => ["x" "y"]
+       (splitext "x")        => ["x" ""]
+       (splitext "/x/y/z.f") => ["/x/y/z" "f"]
+       (splitext "/x/y/z")   => ["/x/y/z" ""]
+       (splitext "/x/y.z/p.q/r.s.t") => ["/x/y.z/p.q/r.s" "t"])
+
 
 (facts "about pathjoin"
        (pathjoin "a" "b")  => "a/b"
        (pathjoin "a/" "b") => "a/b"
-       (pathjoin "a" "/b") => "a/b")
+       (pathjoin "a" "/b") => "a/b"
+       (pathjoin "a" "b" "c") => "a/b/c")
+
 
 (defn fake-watcher
   "Simulate behavior of core/watcher for testing"
@@ -42,6 +47,7 @@
           f filenames
           :when (= ext (extension f))]
       (File. f))))
+
 
 (defn delete-file-recursively
   "Delete file f. If it's a directory, recursively delete all its
@@ -59,6 +65,24 @@ true. [stolen/modified from clojure-contrib]"
 (def markup (pathjoin root "markup"))
 (def site (pathjoin root "site"))
 
+(defn str-contains?
+  "C.f. https://groups.google.com/forum/?fromgroups=#!topic/clojure/VlKrgA3Dco4"
+  [^String big ^String little]
+  (not (neg? (.indexOf big little))))
+
+(defn check-contents
+  [filename]
+  (let [[filen ext] (splitext filename)
+        contents (slurp filename)]
+    (case ext
+      "html" (do
+               (facts
+                (str-contains? contents "Header") => true
+                (str-contains? contents "!DOCTYPE") => true
+                (str-contains? contents "site.css") => true
+                ))
+      nil)))
+
 (do
   (delete-file-recursively (File. root))
   (doseq [fname ["somedir/to/this/file/fake.jpg"
@@ -70,5 +94,6 @@ true. [stolen/modified from clojure-contrib]"
           dst (pathjoin   site (if (vector? fname) (second fname) fname))]
       (io/make-parents src)
       (spit src (if (vector? fname) (nth fname 2) "fake stuff"))
-      (handle-update (fake-watcher markup) markup site)
-      (fact (File. dst) => #(.exists %)))))
+      (handle-update (fake-watcher markup) markup site root)
+      (fact (File. dst) => #(.exists %))
+      (check-contents dst))))
