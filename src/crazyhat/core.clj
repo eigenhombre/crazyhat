@@ -10,34 +10,52 @@
             crazyhat.util)
   (:use crazyhat.util))
 
+(defn new-extension
+  [x]
+  (case x
+    "md" "html"
+    x))
 
-;; FIXME: decompose/decomplect this more functionally, into the following stages:
-;; - determine destination paths
-;; - process files individually based on extension
-(defn handle-update [files srcdir destdir & more]
-  (doseq [f files]
-    (let [verbose (:verbose (apply hash-map more))
-          path (.getPath f)
-          ext (extension path)
-          newdir (dirname (st/replace path srcdir destdir))
-          bn (basename path)
-          get-new-path (fn [ext] (str (pathjoin newdir bn) "." ext))]
+(defn new-filenames-and-extensions
+  [files srcdir destdir]
+  (map (fn [F]
+         (let [path (.getPath F)
+               ext (extension path)
+               newdir (dirname (st/replace path srcdir destdir))
+               basedir (basename path)
+               newext (new-extension ext)
+               newfile (str (pathjoin newdir basedir) "." newext)]
+           [path newfile newext]))
+       files))
+
+(defn handle-copy!
+  [oldfile newfile verbose]
+  (if verbose (println oldfile "==copy==>" newfile))
+  (copy-file oldfile newfile))
+
+(defn handle-html!
+  [oldfile newfile verbose]
+  (if verbose (println oldfile "==HTML==>" newfile))
+  (->> oldfile
+       (slurp)
+       (md/md-to-html-string)
+       (spit newfile)))
+
+(defn handle-update
+  [files srcdir destdir & more]
+  (let [verbose (:verbose (apply hash-map more))
+        newfiles (new-filenames-and-extensions files srcdir destdir)]
+    (doseq [[oldfile newfile ext] newfiles]
+      (io/make-parents newfile)
       (case ext
-        "md" (let [new-path (get-new-path "html")]
-               (io/make-parents new-path)
-               (if verbose (println path "==HTML==>" new-path))
-               ;; Actually make the required HTML file
-               (let [html (md/md-to-html-string (slurp f))]
-                 (spit new-path html)))
-        ("jpg" "png" "css") (let [new-path (str (pathjoin newdir bn) "." ext)]
-                              (if verbose (println path "==copy==>" new-path))
-                              (copy-file path new-path))
-        (println "Don't know what to do with" path "!!!")))))
-        
+        "html" (handle-html! oldfile newfile verbose)
+        ("jpg" "png" "css") (handle-copy! oldfile newfile verbose)
+        (println "Don't know what to do with" oldfile "!!!")))))        
 
 (def extensions-to-update [:md :jpg :png :css])
 
-(defn watcher [root]
+(defn watcher
+  [root]
   (let [src (pathjoin root "markup")
         dest (pathjoin root "site")]
     (w/watcher [src]
@@ -47,7 +65,8 @@
                (w/on-change (fn [fs] (handle-update fs src dest :verbose true))))))
 
 
-(defn server [root]
+(defn server
+  [root]
   (letfn [(serve-stat [req]
             (print "Serving" (:uri req) ": ")
             (let [r (resp/file-response (:uri req)
@@ -57,7 +76,8 @@
     (future (j/run-jetty serve-stat {:port 8080 :join? false}))))
 
 
-(defn -main [ & args ]
+(defn -main
+  [ & args ]
   (case (count args)
     0 (println "Please supply a directory for your site toplevel")
     1 (let [[path] args]
