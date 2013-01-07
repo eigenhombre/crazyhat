@@ -6,7 +6,7 @@ Another Simple Static Blog Engine ... written in Clojure
 src="https://raw.github.com/eigenhombre/crazyhat/master/crazyhat.png"
 alt="Crazy Hat" title="Crazy Hat" align="right" />
 
-`crazyhat` **[work in progress]** is a simple static blog generation
+Crazyhat **[work in progress]** is a simple static blog generation
 engine similar to [Jekyll](https://github.com/mojombo/jekyll), but
 which affords more ease in working with a heirarchy of
 pages/directories, with each directory reflected as a page in the
@@ -82,7 +82,7 @@ neighbors and children in directory structure;
 1. to minimize the amount of HTML and CSS I have to write; I'd rather
 write in [better](https://github.com/weavejester/hiccup) [DSLs](https://github.com/paraseba/cssgen).
 
-Many features of `crazyhat` are taken from my Django application
+Many features of Crazyhat are taken from my Django application
 [Coriolis](http://www.npxdesigns.com/projects/coriolis/).
 
 **Q**: What's with the name?
@@ -115,21 +115,18 @@ In a new terminal window, cd to myblog and make the markup directory.
     mkdir markup
     cd markup
 
-Create an empty index.md file:
-
-    touch index.md
-
-You should see output in your Crazyhat app showing that it discovered and processed the new file.  Hit reload in your browser: the error message should be gone now.
-
-Edit `index.md` and add some content, e.g.:
+Create a file `index.md` file in that directory, as follows:
 
     # Welcome!
 
     Welcome to my new blog.  Crazy hats for everyone!
 
-Hit reload again on your browser and you should see the brand-new HTML rendered there.
+You should see output in your Crazyhat app showing that it discovered
+and processed the new file.  Hit reload in your browser: the 404 error
+message should be gone now, and you should see some brand-new HTML content
+rendered in its place.
 
-### Adding an image
+### Adding an Image
 
 Adding images is easy.  You can steal mine for the purposes of the test.  In your toplevel `markup` dir,
 
@@ -156,11 +153,21 @@ To reduce the fuglyness of your site, you can add a css file.  Put the following
       font-size: 20px;
     }
 
-For the moment, the HTML produced by `crazyhat` links to `/site.css`
+For the moment, the HTML produced by Crazyhat links to `/site.css`
 in every HTML page.  When you reload your browser, you should see the
 new styling take effect.
 
-#### *Next feature to add: blog posts*
+### Adding Blog Posts
+
+To create blog posts inside your home dir, simply make new markdown
+files.  For example, let's create `first-blog-post.md`:
+
+    # First Post to My New Blog
+
+    This is my first blog post.  There are many like it, but this one
+    is mine.
+
+**To be continued...**
 
 ## License
 

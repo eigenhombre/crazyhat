@@ -41,20 +41,22 @@
 
 
 (defn wrap-html
-  [txt]
+  [posts maincontent]
   (html
    (html5
     [:head (include-css "/site.css")]
-    [:body txt])))
+    [:body
+     [:div#content maincontent]
+     [:div#posts [:ul (map (fn [x] [:li x]) posts)]]])))
 
 
 (defn handle-html!
   [oldfile newfile verbose]
   (if verbose (println oldfile "==HTML==>" newfile))
   (->> oldfile
-       (slurp)
-       (md/md-to-html-string)
-       (wrap-html)
+       slurp
+       md/md-to-html-string
+       (wrap-html ["blogpost"])
        (spit newfile)))
 
 
