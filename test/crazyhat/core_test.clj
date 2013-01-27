@@ -1,11 +1,14 @@
 (ns crazyhat.core-test
-  (:import java.io.File)
+  (:import java.io.File)           
   (:use clojure.test
         midje.sweet
         crazyhat.core
-        crazyhat.util)
+        crazyhat.util
+        clojure.pprint)
   (:require [clojure.java.io :as io]
-            [net.cgrand.enlive-html :as enlive]))
+            [clojure.string :as s]
+            [net.cgrand.enlive-html :as html]
+            [watchtower.core :as w]))
 
 
 (facts "about extension"
@@ -33,93 +36,144 @@
 
 
 (facts "about pathjoin"
+       (pathjoin "a") => "a"
+       (pathjoin "/a") => "/a"
        (pathjoin "a" "b")  => "a/b"
        (pathjoin "a/" "b") => "a/b"
        (pathjoin "a" "/b") => "a/b"
+       (pathjoin "/a" "b") => "/a/b"
        (pathjoin "a" "b" "c") => "a/b/c")
 
 
-(defn fake-watcher
-  "Simulate behavior of core/watcher for testing"
-  [root]
-  (let [s (file-seq (File. root))
-        filenames (map #(.getPath %) s)]
-    (for [ext (map name extensions-to-update)
-          f filenames
-          :when (= ext (extension f))]
-      (File. f))))
-
-
-(defn delete-file-recursively
-  "Delete file f. If it's a directory, recursively delete all its
-contents. Raise an exception if any deletion fails unless silently is
-true. [stolen/modified from clojure-contrib]"
-  [f]
-  (if (.isDirectory f)
-    (doseq [child (.listFiles f)]
-      (delete-file-recursively child)))
-  (.delete f))
 
 ;; Test harness where we actually create files and check corresponding
 ;; results:
-(def root "/tmp/testdir")
-(def markup (pathjoin root "markup"))
-(def site (pathjoin root "site"))
+(def root-dir "/tmp/testdir")
+(def markup-dir (pathjoin root-dir "markup"))
+(def site-dir (pathjoin root-dir "site"))
 
-(defn str-contains?
-  "C.f. https://groups.google.com/forum/?fromgroups=#!topic/clojure/VlKrgA3Dco4"
-  [^String big ^String little]
-  (not (neg? (.indexOf big little))))
 
-(defn posts-in-str
+(defn post-names-in-str
   [contents]
-  (map (comp first :content)
-       (-> contents
-           java.io.StringReader.
-           enlive/html-resource
-           (enlive/select [:body :div#posts])
-           first
-           :content
-           first
-           :content)))
+  (map html/text (html/select (-> contents
+                                  java.io.StringReader.
+                                  html/html-resource) [:body :ul :li])))
+
+(defn urls-for-posts
+  "
+  Look for things in the form
+  <body>...<ul>...<li><a class='blogpost' href='post1'>post 1</a></li>...
+  "
+  [contents]
+  (map (comp :href :attrs)
+       (html/select (-> contents
+                        java.io.StringReader.
+                        html/html-resource) [:body :ul :li :a.blogpost])))
 
 
-(defn check-contents
-  [filename desired-posts]
-  (let [[filen ext] (splitext filename)
-        contents (slurp filename)]
-    (case ext
-      "html" (do
-               (facts
-                (str-contains? contents "!DOCTYPE") => true
-                (str-contains? contents "site.css") => true
-;;                (posts-in-str contents) => desired-posts YOU ARE HERE
-                ))
-      nil)))
+(def file-list
+  [{:source "somedir/to/this/file/fake.jpg"}
+   {:source "fake.png"}
+   {:source "site.css"}
+   {:source "media/css/ancillary.css"}
 
-(def files-to-create
-  ["somedir/to/this/file/fake.jpg"
-   ["index.md"    "index.html"    "# Header\n\nbody"   ["blogpost"]]
-   ["blogpost.md" "blogpost.html" "A sample blog post" []]
-   "fake.png"
-   "site.css"
-   "media/css/ancillary.css"])
+   {:source "index.md"         :dest "index.html"
+    :body "# Header\n\nbody"   :posts ["blogpost" "blogpost2"]}
 
-(do
-  (delete-file-recursively (File. root))
-  ;; Make test files:
-  (doseq [fname files-to-create]
-    (let [src (pathjoin markup (if (vector? fname) (first fname)  fname))
-          content (if (vector? fname) (nth fname 2) "fake stuff")]
-      (io/make-parents src)
-      (spit src content)))
+   {:source "blogpost.md"      :dest "blogpost.html"
+    :body "A sample blog post" :posts ["blogpost" "blogpost2"]}
 
-  ;; Handle the output file creation:
-  (handle-update (fake-watcher markup) markup site root)
+   {:source "blogpost2.md"     :dest "blogpost2.html"
+    :body "Another blog post"  :posts ["blogpost" "blogpost2"]}])
 
-  ;; Check resulting content:
-  (doseq [fname files-to-create]
-    (let [dst (pathjoin site (if (vector? fname) (second fname) fname))
-          desired_posts (if (vector? fname) (nth fname 3) [])]
-      (fact (File. dst) => #(.exists %))
-      (check-contents dst desired_posts))))
+
+(defn is-jpg
+  [path]
+  (let [[_ ext] (splitext path)]
+    (= (s/lower-case ext) "jpg")))
+
+
+(facts "about is-jpg"
+       (is-jpg "") => falsey
+       (is-jpg "foo.jpg") => truthy
+       (is-jpg "FOO.JPG") => truthy)
+
+
+(facts "about thumb-path"
+       (thumb-path "") => ""
+       (thumb-path "x.png") => "x-inline.png"
+       (thumb-path "x.jpg") => "x-inline.jpg"
+       (thumb-path "x.JPG") => "x-inline.JPG"
+       (thumb-path "/x/y/z.jpg") => "/x/y/z-inline.jpg")
+
+
+(defn make-test-file [fmap]
+  (let [path (pathjoin markup-dir (:source fmap))
+        content (get fmap :body "fake stuff")]
+    (io/make-parents path)
+    (if (is-jpg path)
+      (copy-file "resources/test-image.jpeg" path)
+      (spit path content))))
+
+
+(defn destination-path-for [fmap]
+  (pathjoin site-dir (get fmap :dest (:source fmap))))
+
+(defn source-path-for [fmap]
+  (pathjoin site-dir (:source fmap)))
+
+(defn posts-for [fmap]
+  (get fmap :posts []))
+
+(defn path-exists [path] (-> path File. .exists))
+
+
+(fact "Creating thumbnails works"
+      (.exists (File. "/tmp/tmp.jpg")) => truthy
+      (against-background
+       (before :facts
+               (make-thumbnail "resources/test-image.jpeg"
+                               "/tmp/tmp.jpg" 100))
+       (after :checks
+              (io/delete-file "/tmp/tmp.jpg"))))
+
+
+(defn image-width [path]
+  (let [img (javax.imageio.ImageIO/read (File. path))]
+    (.getWidth img)))
+
+
+(against-background
+ [(before :contents
+          (do
+            ;; Clean test directory
+            (delete-file-recursively (File. root-dir))
+            ;; Make test files:
+            (doseq [fmap file-list]
+              (make-test-file fmap))
+            ;; Handle the output file creation:
+            (handle-update! (wanted-file-seq markup-dir)
+                           markup-dir site-dir root-dir)))]
+ (doseq [f file-list]
+   (let [destpath (destination-path-for f)
+         srcpath (source-path-for f)
+         [filen ext] (splitext destpath)
+         contents (slurp destpath)]
+     (fact "Desired output file exists"
+           (path-exists destpath) => truthy)
+     (case ext
+       "html"
+       (facts "about HTML files"
+              contents => (contains "!DOCTYPE")
+              contents => (contains "site.css")
+              (post-names-in-str contents) => (just (posts-for f))
+              (count (urls-for-posts contents)) => (count (posts-for f)))
+       "jpg"
+       (facts "about generated JPG files"
+              (path-exists srcpath) => truthy
+              (path-exists destpath) => truthy
+              (path-exists (thumb-path destpath)) => truthy
+              (< (image-width (thumb-path destpath))
+                 (image-width destpath)) => truthy)
+       ;; else:
+       nil))))

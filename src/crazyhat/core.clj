@@ -10,10 +10,11 @@
             crazyhat.util)
   (:use crazyhat.util
         [hiccup.core :only [html]]
+        [hiccup.element :only [link-to]]
         [hiccup.page :only [html5 include-css]]))
 
 
-(defn new-extension
+(defn dest-file-extension
   [x]
   (case x
     "md" "html"
@@ -26,7 +27,7 @@
          (let [path (.getPath F)
                path-in-markup-dir (st/replace path (pathjoin rootdir "markup/") "")
                ext (extension path)
-               newext (new-extension ext)
+               newext (dest-file-extension ext)
                newfile-oldext (pathjoin rootdir "site" path-in-markup-dir)
                [newf _] (splitext newfile-oldext)
                newfile (str newf "." newext)]
@@ -42,12 +43,37 @@
 
 (defn wrap-html
   [posts maincontent]
-  (html
-   (html5
-    [:head (include-css "/site.css")]
-    [:body
-     [:div#content maincontent]
-     [:div#posts [:ul (map (fn [x] [:li x]) posts)]]])))
+  (letfn [(link-for-post [p]
+            [:li (link-to {:class "blogpost"}
+                          (str p ".html")
+                          p)])]
+    (html
+     (html5
+      [:head (include-css "/site.css")]
+      [:body
+       [:div#content maincontent]
+       [:div#posts [:ul (map link-for-post posts)]]]))))
+
+
+(defn is-md [f]
+  (= (extension f) "md"))
+
+
+(defn posts-for-file
+  "
+  Find blog posts in same directory as <filename> by actually listing
+  directory (FIXME: inefficient)
+  "
+  [filename]
+  (->> filename
+       dirname
+       File.
+       .listFiles
+       seq
+       (map #(.getName %))
+       (filter is-md)
+       (remove #(= "index.md" %))
+       (map #(first (st/split % #"\.")))))
 
 
 (defn handle-html!
@@ -56,11 +82,11 @@
   (->> oldfile
        slurp
        md/md-to-html-string
-       (wrap-html ["blogpost"])
+       (wrap-html (posts-for-file oldfile))
        (spit newfile)))
 
 
-(defn handle-update
+(defn handle-update!
   [files srcdir destdir rootdir & more]
   (let [verbose (:verbose (apply hash-map more))
         newfiles (new-filenames-and-extensions files rootdir)]
@@ -68,11 +94,25 @@
       (io/make-parents newfile)
       (case ext
         "html" (handle-html! oldfile newfile verbose)
-        ("jpg" "png" "css") (handle-copy! oldfile newfile verbose)
+        ("png" "css") (handle-copy! oldfile newfile verbose)
+        ("jpg") (do
+                  (handle-copy! oldfile newfile verbose)
+                  (make-thumbnail oldfile (thumb-path newfile) 300))
         (println "Don't know what to do with" oldfile "!!!")))))        
 
 
 (def extensions-to-update [:md :jpg :png :css])
+
+
+(defn wanted-file-seq
+  "Simulate behavior of core/watcher for testing"
+  [root]
+  (let [s (file-seq (File. root))
+        filenames (map #(.getPath %) s)]
+    (for [ext (map name extensions-to-update)
+          f filenames
+          :when (= ext (extension f))]
+      (File. f))))
 
 
 (defn watcher
@@ -83,7 +123,8 @@
                (w/rate 100)
                (w/file-filter w/ignore-dotfiles)
                (w/file-filter (apply w/extensions extensions-to-update))
-               (w/on-change (fn [fs] (handle-update fs src dest root :verbose true))))))
+               (w/on-change (fn [_] (handle-update! (wanted-file-seq root)
+                                                    src dest root :verbose true))))))
 
 
 (defn server

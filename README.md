@@ -80,7 +80,10 @@ neighbors and children in directory structure;
 1. to customize Clojure code (simple & beautiful) rather than Ruby
 (somewhat pretty but not simple);
 1. to minimize the amount of HTML and CSS I have to write; I'd rather
-write in [better](https://github.com/weavejester/hiccup) [DSLs](https://github.com/paraseba/cssgen).
+write in [better](https://github.com/weavejester/hiccup)
+[DSLs](https://github.com/paraseba/cssgen).
+1. Complete unit test coverage to make ruthless refactoring possible
+at any point in the code development.
 
 Many features of Crazyhat are taken from my Django application
 [Coriolis](http://www.npxdesigns.com/projects/coriolis/).
@@ -89,7 +92,7 @@ Many features of Crazyhat are taken from my Django application
 
 A: When I was typing `lein new`, I paused for a moment to think of a
 new name.  Someone walked into the room and said, "You're wearing your
-new crazy hat!"  And so it was....
+crazy new hat!"  And so it was....
 
 ## <a id="tutorial"></a>Tutorial
 
@@ -167,7 +170,20 @@ files.  For example, let's create `first-blog-post.md`:
     This is my first blog post.  There are many like it, but this one
     is mine.
 
-**To be continued...**
+Upon reloading `index.html`, you should see a link to the blog post,
+which, when clicked, displays the new page.  (**This behavior is still
+under construction**).
+
+### Special handling for pictures
+
+As shown above, you can easily insert pictures. However, Crazyhat
+provides some special handling which makes this a bit easier. 
+
+Images copied into the `markup` directory (or subdirectories) will
+cause copies to be placed in the appropriate `site` directory, along
+with smaller thumbnail images for display in Web pages. A special
+markup syntax is supported by which you may easily include both a
+thumbnail with caption, and a larger-size image (**TODO**).
 
 ## License
 
