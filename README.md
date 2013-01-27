@@ -12,7 +12,12 @@ which affords more ease in working with a heirarchy of
 pages/directories, with each directory reflected as a page in the
 generated site, and with the possibility to navigate to related areas
 more easily. Any page can be a blog, and there is an aggregate feed
-for all blog posts as well.
+for all blog posts as well.  Support is also added for ease of mixing
+pictures with Markdown-formatted text.
+
+I am interested in showing mathematics, code, images and text
+as beautifully and simply as possible and I intend to use this software
+to do that.
 
 ### Building
 
