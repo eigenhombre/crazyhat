@@ -8,7 +8,7 @@ _ARCHIVED_ - an early attempt, not much here that I'd do the same way anymore.
 src="https://raw.github.com/eigenhombre/crazyhat/master/crazyhat.png"
 alt="Crazy Hat" title="Crazy Hat" align="right" />
 
-Crazyhat **[work in progress]** is a simple static blog generation
+Crazyhat ~(work in progress)~ is a simple static blog generation
 engine similar to [Jekyll](https://github.com/mojombo/jekyll), but
 which affords more ease in working with a heirarchy of
 pages/directories, with each directory reflected as a page in the
