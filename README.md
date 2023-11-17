@@ -2,6 +2,8 @@
 
 Another Simple Static Blog Engine ... written in Clojure
 
+_ARCHIVED_ - an early attempt, not much here that I'd do the same way anymore.
+
 <img
 src="https://raw.github.com/eigenhombre/crazyhat/master/crazyhat.png"
 alt="Crazy Hat" title="Crazy Hat" align="right" />
